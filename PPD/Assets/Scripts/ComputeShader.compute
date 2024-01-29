@@ -1,0 +1,71 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+
+struct Cube
+{
+    float yPosition;
+    float speed;
+    float maxY;
+    float minY;
+    int index;
+    int3 id;
+    int3 groupId;
+    int3 groupIdThread;
+};
+
+float time;
+
+RWStructuredBuffer<Cube> cubes;
+float rand(float2 co)
+{
+    return frac(sin(dot(co.xy ,float2(12.9898,78.233))) * 43758.5453);
+}
+
+[numthreads(32,2,1)]
+void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GROUPID, uint3 gidthread : SV_GroupThreadID)
+{
+    // Cube cube = cubes[gidthread.x + gidthread.y * 8 + gid.x * 64];
+    // Cube cube = cubes[gidthread.x + gid.x * 64];
+    int gridDimx = 8;
+    int gridDimy = 8;
+    int gridDimz = 1;
+    int blockDimx = 32;
+    int blockDimy = 2;
+    int blockDimz = 1;
+    //Teste
+    // int block = gid.x + gid.y * gridDimx;
+    // int thread = gidthread.x + gidthread.y * blockDimx;
+    // int index = block*blockDimx*blockDimy + thread;
+
+    //teste2
+    int block = gid.x * gridDimy * gridDimz + gid.y * gridDimz + gid.z;
+    int thread = gidthread.x * blockDimy * blockDimz + gidthread.y * blockDimz + gidthread.z;
+    int index = block * blockDimx * blockDimy * blockDimz + thread;
+    
+    Cube cube = cubes[index];
+    // Cube cube = cubes[id.x];
+    cube.index = index;
+    cube.id = id;
+    cube.groupId = gid;
+    cube.groupIdThread = gidthread;
+
+    if(cube.yPosition >= 2)
+    {
+        // cube.speed = Random.Range(-minSpeed, -maxSpeed);
+        int multiplierByThread = (thread / blockDimx) + 2; // Make the same thing for blocks-
+        cube.speed = -rand(float2(10, 50))*((block % 64) + 1)*0.03f * multiplierByThread;
+    }
+    else if(cube.yPosition <= -2)
+    {
+        int multiplierByThread = (thread / blockDimx) + 2;
+        cube.speed = rand(float2(10, 50))*((block % 64) + 1)*0.03f * multiplierByThread;
+    }
+
+    cube.yPosition += cube.speed * time;
+    cubes[index] = cube;
+}
+

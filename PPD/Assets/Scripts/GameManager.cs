@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
     [Serializable]
-    public struct Cube
+    public struct Sphere
     {
         public float yPosition;
         public float speed;
@@ -21,8 +22,8 @@ public class GameManager : MonoBehaviour
         public int3 groupIdThread;
     }
     
-    [SerializeField] private Cube[] cubes;
-    [SerializeField] private List<GameObject> cubesPos;
+    [SerializeField] private Sphere[] spheres;
+    [SerializeField] private List<GameObject> spheresPos;
     private float _maxY = 2f;
     private float _minY = -2f;
     [SerializeField] private List<Material> _materials = new();
@@ -32,7 +33,7 @@ public class GameManager : MonoBehaviour
     [Header("CUDA")]
     public ComputeShader computeShader;
 
-    private static readonly int Cubes = Shader.PropertyToID("cubes");
+    private static readonly int Spheres = Shader.PropertyToID("spheres");
     private static readonly int Time1 = Shader.PropertyToID("time");
 
     private void Awake()
@@ -41,34 +42,19 @@ public class GameManager : MonoBehaviour
         // _minY = transform.position.y - 2f;
         // cubesPos = GameObject.FindGameObjectsWithTag("Cube").ToList();
         int i = 0;
-        foreach (GameObject cubePos in cubesPos)
+        foreach (GameObject spherePos in spheresPos)
         {
             int materialID = (i / 64) % 4;
-            cubePos.GetComponent<MeshRenderer>().material = _materials[materialID];
-            Cube cube = new Cube();
-            cube.yPosition = cubePos.transform.position.y;
-            cube.speed = 1f;
+            spherePos.GetComponent<MeshRenderer>().material = _materials[materialID];
+            Sphere sphere = new Sphere();
+            sphere.yPosition = spherePos.transform.position.y;
+            sphere.speed = 1f;
             // cube.speed = Random.Range(minSpeed, maxSpeed);
-            cube.maxY = cube.yPosition + 4f;
-            cube.minY = cube.yPosition - 4f;
-            cubes[i] = cube;
+            sphere.maxY = sphere.yPosition + 2f;
+            sphere.minY = sphere.yPosition - 2f;
+            spheres[i] = sphere;
             i++;
         }
-        // foreach (Cube cube in cubes)
-        // {
-        //     var cube1 = cube;
-        //     cube1.pos = cubesPos[i].transform.position;
-        //     i++;
-        //     // cube.pos.GetComponent<MeshRenderer>().material = _materials[new System.Random().Next(0, _materials.Count)];
-        //     cube1.speed = Random.Range(minSpeed, maxSpeed);
-        //     var position = cube1.pos;
-        //     cube1.maxY = position.y + 2f;
-        //     cube1.minY = position.y - 2f;
-        //     cube = cube1;
-        //     // cube.movingUp = new System.Random().Next(0, 2) == 1;
-        //
-        // }
-        // _speed = Random.Range(0.1f, 1f);
         
     }
 
@@ -80,52 +66,29 @@ public class GameManager : MonoBehaviour
             // Test();
         }
         Test();
-
-    
-        // foreach (Cube cube in cubes)
-           // {
-        //     // float speed = Random.Range(0.5f, 2f);
-        //     if(cube.pos.position.y >= cube.maxY)
-        //     {
-        //         cube.speed = Random.Range(-minSpeed, -maxSpeed);
-        //     }
-        //     else if(cube.pos.position.y <= cube.minY)
-        //     {
-        //         cube.speed = Random.Range(minSpeed, maxSpeed);
-        //     }
-        //     MoveTo(cube.pos, cube.speed);
-        // }
+        
     }
 
 
     private void Test()
     {
         int totalSize = sizeof(float) * 4 + sizeof(int) * 10; 
-        ComputeBuffer cubesBuffer = new ComputeBuffer(cubes.Length, totalSize);
-        cubesBuffer.SetData(cubes);
-        computeShader.SetBuffer(0, Cubes, cubesBuffer);
+        ComputeBuffer spheresBuffer = new ComputeBuffer(spheres.Length, totalSize);
+        spheresBuffer.SetData(spheres);
+        computeShader.SetBuffer(0, Spheres, spheresBuffer);
         computeShader.SetFloat(Time1, Time.deltaTime);
-        computeShader.Dispatch(0, 8, 8, 1);
+        computeShader.Dispatch(0, 16, 8, 1);
         
-        cubesBuffer.GetData(cubes);
+        spheresBuffer.GetData(spheres);
         int index = 0;
         
-        foreach (Cube cube in cubes)
+        foreach (Sphere sphere in spheres)
         {
-            // if(index < 900)
-            //     Debug.Log("id: " + cube.id + " gid: "+ cube.groupId + " + gidthread " + cube.groupIdThread);
-            // cubesPos[index].transform.position = cube.pos;
-            cubesPos[index].transform.position = new Vector3(cubesPos[index].transform.position.x, cube.yPosition, cubesPos[index].transform.position.z);
+            spheresPos[index].transform.position = new Vector3(spheresPos[index].transform.position.x, sphere.yPosition, spheresPos[index].transform.position.z);
             index++;
-            // Debug.Log(cube.pos.y);
         }
-
-
-        // Maybe need a list of Objects for keeping track of the cubes?
-        // foreach (Cube cube in cubes)
-        // {
-        // }
-        cubesBuffer.Dispose();
+        
+        spheresBuffer.Dispose();
     }
     
     private void MoveTo(Transform transform, float speed)

@@ -89,7 +89,7 @@ public class JobManager : MonoBehaviour
             iterations = iterations
         };
         
-        JobHandle jobHandle = job.Schedule(sphereList.Length, 64);
+        JobHandle jobHandle = job.Schedule(sphereList.Length, sphereList.Length/15);
         jobHandle.Complete();
         
         _calculationText.text = sphereList[0].calc.ToString();

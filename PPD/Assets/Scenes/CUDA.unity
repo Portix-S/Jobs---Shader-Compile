@@ -479,7 +479,7 @@ MonoBehaviour:
   minSpeed: 1
   maxSpeed: 5
   iterations: 10
-  cudaIterations: 10
+  cudaIterations: 1
   computeShader: {fileID: 7200000, guid: e81ed92494983614882c44ce69e309d3, type: 3}
   gridDimX: 4
   gridDimY: 4

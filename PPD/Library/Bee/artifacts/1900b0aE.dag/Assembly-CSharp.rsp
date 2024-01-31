@@ -362,6 +362,7 @@
 "Assets/Scripts/Move.cs"
 "Assets/Scripts/MoveJob.cs"
 "Assets/Scripts/SequentialManager.cs"
+"Assets/Scripts/Sphere.cs"
 -langversion:9.0
 
 /deterministic

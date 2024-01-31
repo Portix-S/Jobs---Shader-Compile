@@ -18,6 +18,9 @@ struct Sphere
 };
 
 float time;
+int gridDimx;
+int gridDimy;
+int gridDimz;
 
 RWStructuredBuffer<Sphere> spheres;
 float rand(float2 co)
@@ -25,16 +28,15 @@ float rand(float2 co)
     return frac(sin(dot(co.xy ,float2(12.9898,78.233))) * 43758.5453);
 }
 
-[numthreads(32,2,1)]
+[numthreads(16,16,1)]
 void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GROUPID, uint3 gidthread : SV_GroupThreadID)
 {
-    int gridDimx = 16;
-    int gridDimy = 8;
-    int gridDimz = 1;
-    int blockDimx = 32;
-    int blockDimy = 2;
+    int blockDimx = 16;
+    int blockDimy = 16;
     int blockDimz = 1;
+    
 
+    
     // Teórico
     // int block = blockIdx.x * gridDim.y * gridDim.z + blockIdx.y * gridDim.z + blockIdx.z;
     // int thread = threadIdx.x * blockDim.y * blockDim.z + threadIdx.y * blockDim.z + threadIdx.z;
@@ -43,31 +45,33 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GROUPID, uint3 gidth
     int block = gid.x * gridDimy * gridDimz + gid.y * gridDimz + gid.z;
     int thread = gidthread.x * blockDimy * blockDimz + gidthread.y * blockDimz + gidthread.z;
     int index = block * blockDimx * blockDimy * blockDimz + thread;
-
-    for (int i = 0; i < 100000; i++)
-    {
-        sqrt(5000)+index/1000;
-    }
+    
     
     Sphere sphere = spheres[index];
     // Cube cube = cubes[id.x];
-    sphere.index = index;
+    // sphere.index = index;
     sphere.id = id;
     sphere.groupId = gid;
     sphere.groupIdThread = gidthread;
 
+    for (int i = 0; i < 1000; i++)
+    {
+        sphere.index += (sqrt(5000)+i)/1000;
+    }
+
     if(sphere.yPosition >= sphere.maxY)
     {
-        // cube.speed = Random.Range(-minSpeed, -maxSpeed);
-        int multiplierByThread = (thread / blockDimx) + 2; // Make the same thing for blocks-
-        int multiplierByBlock = (block / gridDimx) + 2;
-        sphere.speed = -rand(float2(10, 50))*((block % 64) + 1)*0.01 * multiplierByThread * multiplierByBlock;
+        // sphere.speed = -(gidthread.x * 0.1)  - 0.1; // Mesma que OpenMP
+
+        
+        sphere.speed = -rand(float2(10, 50))*0.1 * (block+1);
+
     }
     else if(sphere.yPosition <= sphere.minY)
     {
-        int multiplierByThread = (thread / blockDimx) + 2;
-        int multiplierByBlock = (block / gridDimx) + 2;
-        sphere.speed = rand(float2(10, 50))*((block % 64) + 1)*0.001 * multiplierByThread * multiplierByBlock;
+        // sphere.speed = (gidthread.x * 0.1) + 0.1; // Mesmo que OpenMP
+        
+        sphere.speed = rand(float2(10, 50))*0.1 * (block+1);
     }
 
     sphere.yPosition += sphere.speed * time;

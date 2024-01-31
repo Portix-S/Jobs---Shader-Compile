@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 using Spheres;
+using TMPro;
 
 public class SequentialManager : MonoBehaviour
 {
@@ -17,7 +18,9 @@ public class SequentialManager : MonoBehaviour
     [SerializeField] private List<Material> _materials = new();
     public float minSpeed = 0.1f;
     public float maxSpeed = 0.5f;
-
+    private int iterations = 1;
+    private int calc;
+    private TextMeshProUGUI _calculationText;
 
     private void Awake()
     {
@@ -39,13 +42,15 @@ public class SequentialManager : MonoBehaviour
 
     // Update is called once per frame
     public void Sequential()
-    {   
+    {
+        _calculationText.text = spheres[0].index.ToString();
         for(int i = 0; i < spheres.Length; i++)
         {
+            spheres[i].index = i;
             //Make long calculations later
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < iterations; j++)
             {
-                Mathf.Sqrt(5000);
+                spheres[i].index += (int)(Mathf.Sqrt(5000) * (spheres[i].yPosition));
             }
             if(spheres[i].yPosition >= spheres[i].maxY)
             {
@@ -69,6 +74,21 @@ public class SequentialManager : MonoBehaviour
             this.spheres[i] = spheres[i];
         }
         this.spheresPos = spheresPos;
+    }
+    
+    public void SetCalcText(TextMeshProUGUI text)
+    {
+        _calculationText = text;
+    }
+    
+    public void ChangeIterations(int value)
+    {
+        iterations = value;
+    }
+    
+    public int GetIteration()
+    {
+        return iterations;
     }
     // public void SetSpheres(Sphere[] spheres)
     // {

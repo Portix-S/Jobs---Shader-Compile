@@ -1,10 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-RWTexture2D<float4> Result;
-
 struct Sphere
 {
     float yPosition;
@@ -21,6 +17,7 @@ float time;
 int gridDimx;
 int gridDimy;
 int gridDimz;
+int iterations;
 
 RWStructuredBuffer<Sphere> spheres;
 float rand(float2 co)
@@ -48,29 +45,30 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GROUPID, uint3 gidth
     
     
     Sphere sphere = spheres[index];
-    // Cube cube = cubes[id.x];
-    // sphere.index = index;
+    sphere.index = index;
     sphere.id = id;
     sphere.groupId = gid;
     sphere.groupIdThread = gidthread;
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < iterations; i++)
     {
-        sphere.index += (sqrt(5000)+i)/1000;
+        sphere.index += (sqrt(5000)*sphere.yPosition);
     }
 
     if(sphere.yPosition >= sphere.maxY)
     {
-        // sphere.speed = -(gidthread.x * 0.1)  - 0.1; // Mesma que OpenMP
+        // sphere.speed = -(gidthread.x * 0.1) + 0.1; // Mesmo que OpenMP
 
+        // sphere.speed = -((index % 64) * 0.1)  - 0.1; // Mesma que OpenMP
         
         sphere.speed = -rand(float2(10, 50))*0.1 * (block+1);
-
     }
     else if(sphere.yPosition <= sphere.minY)
     {
         // sphere.speed = (gidthread.x * 0.1) + 0.1; // Mesmo que OpenMP
-        
+
+        // sphere.speed = ((index%64) * 0.1)  - 0.1; // Mesma que OpenMP
+
         sphere.speed = rand(float2(10, 50))*0.1 * (block+1);
     }
 

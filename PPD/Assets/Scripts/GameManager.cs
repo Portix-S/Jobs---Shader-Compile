@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 using Spheres;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -16,9 +17,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private List<Material> _materials = new();
     public float minSpeed = 0.1f;
     public float maxSpeed = 0.5f;
-    
-    
-    [Header("CUDA")]
+    private int calc;
+    public int iterations = 1;
+
+
+    [Header("CUDA")] 
+    public int cudaIterations = 1;
     public ComputeShader computeShader;
     ComputeBuffer spheresBuffer;
     public int gridDimX = 16;
@@ -39,14 +43,21 @@ public class GameManager : MonoBehaviour
     
     [Header("HUD")]
     int _currentScene = 0;
+    int _lastScene = 0;
     [SerializeField] private TextMeshProUGUI _fpsText;
     [SerializeField] private TextMeshProUGUI _sceneText;
+    [SerializeField] private TextMeshProUGUI _iterationText;
+    [SerializeField] private TextMeshProUGUI _calculationText;
+
+    [SerializeField] Slider slider;
     private float fpsCooldown = 0.5f;
     private float fpsCooldownTimer = 0f;
     
     [Header("Scripts")]
     [SerializeField] private SequentialManager _sequentialManager;
     [SerializeField] private JobManager _jobManager;
+    private static readonly int Iterations = Shader.PropertyToID("iterations");
+
     private void Awake()
     {
         int totalSize = blockDimX * blockDimY * blockDimZ * gridDimX * gridDimY * gridDimZ;
@@ -93,8 +104,45 @@ public class GameManager : MonoBehaviour
             i++;
         }
         _sequentialManager.SetSpheres(this.spheres, this.spheresPos);
+        _sequentialManager.SetCalcText(_calculationText);
         _jobManager.SetSpheres(this.spheres, this.spheresPos);
+        _jobManager.SetCalcText(_calculationText);
         SendDataToGPU();
+    }
+
+    public void ChangeIterations(Slider slider)
+    {
+        iterations = (int)slider.value;
+        _iterationText.text = "Iterations: " + iterations;
+        if (_currentScene == 0)
+        {
+            int sequentialIterations = _sequentialManager.GetIteration();
+            // if(iterations == 1000)
+            //     slider.value = sequentialIterations;
+            // else
+            _sequentialManager.ChangeIterations(iterations);
+            if(_jobManager.GetIteration() <= iterations)
+            {
+                _jobManager.ChangeIterations(iterations);
+                cudaIterations = iterations;
+                computeShader.SetInt(Iterations, iterations);
+            }
+        }
+        else if (_currentScene == 1)
+        {
+            _jobManager.ChangeIterations(iterations);
+            if(cudaIterations <= iterations)
+            {
+                cudaIterations = iterations;
+                computeShader.SetInt(Iterations, cudaIterations);
+            }
+        }
+        else if (_currentScene == 2)
+        {
+            cudaIterations = iterations;
+            computeShader.SetInt(Iterations, cudaIterations);
+        }
+        
     }
 
     // Update is called once per frame
@@ -128,18 +176,35 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             _sceneText.text = "Cena 0 - Sequencial";
-            // _sequentialManager.SetSpheres(spheres, spheresPos);
             _currentScene = 0;
+            Debug.Log(_sequentialManager.GetIteration());
+            slider.value = _sequentialManager.GetIteration();
+            slider.maxValue = 1000;
+            _lastScene = 0;
         }
         if(Input.GetKeyDown(KeyCode.Alpha2))
         {
             _sceneText.text = "Cena 1 - Paralelo com OpenMP";
             _currentScene = 1;
+            if (_lastScene <= 1)
+            {
+                slider.maxValue = 10000;
+                slider.value = _jobManager.GetIteration();
+            }
+            else
+            {
+                slider.value = _jobManager.GetIteration();
+                slider.maxValue = 10000;
+            }
+            _lastScene = 1;
         }
         if(Input.GetKeyDown(KeyCode.Alpha3))
         {
             _sceneText.text = "Cena 2 - CUDA";
             _currentScene = 2;
+            slider.maxValue = 1000000;
+            slider.value = cudaIterations;
+            _lastScene = 2;
         }
         
         if(Input.GetKeyDown(KeyCode.E))
@@ -173,7 +238,7 @@ public class GameManager : MonoBehaviour
         
         spheresBuffer.GetData(spheres);
         int index = 0;
-        
+        _calculationText.text = spheres[0].index.ToString();
         foreach (Sphere sphere in spheres)
         {
             spheresPos[index].transform.position = new Vector3(spheresPos[index].transform.position.x, sphere.yPosition, spheresPos[index].transform.position.z);
@@ -190,6 +255,7 @@ public class GameManager : MonoBehaviour
         computeShader.SetInt(GridDimX, gridDimX);
         computeShader.SetInt(GridDimY, gridDimY);
         computeShader.SetInt(GridDimZ, gridDimZ);
+        computeShader.SetInt(Iterations, iterations);
     }
 
     private void OnDestroy()

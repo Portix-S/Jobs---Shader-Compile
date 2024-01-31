@@ -8,6 +8,7 @@ using Unity.Burst;
 using Unity.Collections;
 using UnityEngine.Serialization;
 using Spheres;
+using TMPro;
 
 public class JobManager : MonoBehaviour
 {
@@ -20,7 +21,10 @@ public class JobManager : MonoBehaviour
     [SerializeField] private List<Material> _materials = new();
     public float minSpeed = 0.1f;
     public float maxSpeed = 0.5f;
+    private int iterations = 1;
+    private TextMeshProUGUI _calculationText;
 
+    private SphereMoveJob job;
 
     private void Awake()
     {
@@ -49,23 +53,47 @@ public class JobManager : MonoBehaviour
         this.spheresPos = spheresPos;
     }
     
-    // public void SetSpheres(Sphere[] spheres)
-    // {
-    //     sphereList = new NativeArray<Sphere>(spheres.Length, Allocator.Persistent);
-    //     sphereList.CopyFrom(spheres);
-    // }
+    public void SetCalcText(TextMeshProUGUI text)
+    {
+        _calculationText = text;
+    }
+    
+    public void ChangeIterations(int value)
+    {
+        iterations = value;
+        try
+        {
+            job.iterations = value;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Job not initialized");
+            throw;
+        }
+    }
+    
+    public int GetIteration()
+    {
+        return iterations;
+    }
+
 
     // Update is called once per frame
     public void OpenMP()
     {   
-        SphereMoveJob job = new SphereMoveJob()
+        
+        job = new SphereMoveJob()
         {
             spheres = sphereList,
-            time = Time.deltaTime
+            time = Time.deltaTime,
+            iterations = iterations
         };
         
         JobHandle jobHandle = job.Schedule(sphereList.Length, 64);
         jobHandle.Complete();
+        
+        _calculationText.text = sphereList[0].index.ToString();
+
         for(int i = 0; i < sphereList.Length; i++)
         {
             indexes[i] = sphereList[i].index;
@@ -79,14 +107,16 @@ public class JobManager : MonoBehaviour
     {
         public NativeArray<Sphere> spheres;
         public float time;
+        public int iterations;
         
         public void Execute(int index)
         {
             Sphere sphere = spheres[index];
+            sphere.index = index;
             // sphere.index = 0;
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < iterations; i++)
             {
-                sphere.index += (int)Mathf.Sqrt(5000+index);
+                sphere.index += (int)(Mathf.Sqrt(5000) * sphere.yPosition);
             }
 
             if(sphere.yPosition >= sphere.maxY)

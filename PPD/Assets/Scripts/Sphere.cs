@@ -12,6 +12,7 @@ namespace Spheres
             public float maxY;
             public float minY;
             public int index;
+            public int calc;
             public int3 id;
             public int3 groupId;
             public int3 groupIdThread;

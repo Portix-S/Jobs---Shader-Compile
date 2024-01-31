@@ -43,14 +43,14 @@ public class SequentialManager : MonoBehaviour
     // Update is called once per frame
     public void Sequential()
     {
-        _calculationText.text = spheres[0].index.ToString();
+        _calculationText.text = spheres[0].calc.ToString();
         for(int i = 0; i < spheres.Length; i++)
         {
-            spheres[i].index = i;
+            spheres[i].calc = i;
             //Make long calculations later
             for (int j = 0; j < iterations; j++)
             {
-                spheres[i].index += (int)(Mathf.Sqrt(5000) * (spheres[i].yPosition));
+                spheres[i].calc += (int)(Mathf.Sqrt(5000) * (spheres[i].yPosition));
             }
             if(spheres[i].yPosition >= spheres[i].maxY)
             {

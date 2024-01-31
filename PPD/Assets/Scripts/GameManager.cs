@@ -96,6 +96,7 @@ public class GameManager : MonoBehaviour
             spherePos.GetComponent<MeshRenderer>().material = _materials[materialID];
             Sphere sphere = new Sphere();
             sphere.yPosition = spherePos.transform.position.y;
+            sphere.calc = 0;
             sphere.speed = 1f;
             // cube.speed = Random.Range(minSpeed, maxSpeed);
             sphere.maxY = sphere.yPosition + 2f;
@@ -238,7 +239,7 @@ public class GameManager : MonoBehaviour
         
         spheresBuffer.GetData(spheres);
         int index = 0;
-        _calculationText.text = spheres[0].index.ToString();
+        _calculationText.text = spheres[0].calc.ToString();
         foreach (Sphere sphere in spheres)
         {
             spheresPos[index].transform.position = new Vector3(spheresPos[index].transform.position.x, sphere.yPosition, spheresPos[index].transform.position.z);
@@ -248,7 +249,7 @@ public class GameManager : MonoBehaviour
 
     private void SendDataToGPU()
     {
-        int totalSize = sizeof(float) * 4 + sizeof(int) * 10;
+        int totalSize = sizeof(float) * 4 + sizeof(int) * 11;
         spheresBuffer = new ComputeBuffer(spheres.Length, totalSize);
         spheresBuffer.SetData(spheres);
         computeShader.SetBuffer(0, Spheres, spheresBuffer);

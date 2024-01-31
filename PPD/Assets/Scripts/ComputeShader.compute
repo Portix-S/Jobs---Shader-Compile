@@ -8,6 +8,7 @@ struct Sphere
     float maxY;
     float minY;
     int index;
+    int calc;
     int3 id;
     int3 groupId;
     int3 groupIdThread;
@@ -49,10 +50,11 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GROUPID, uint3 gidth
     sphere.id = id;
     sphere.groupId = gid;
     sphere.groupIdThread = gidthread;
-
+    
+    sphere.calc = index;
     for (int i = 0; i < iterations; i++)
     {
-        sphere.index += (sqrt(5000)*sphere.yPosition);
+        sphere.calc += (sqrt(5000)*sphere.yPosition);
     }
 
     if(sphere.yPosition >= sphere.maxY)

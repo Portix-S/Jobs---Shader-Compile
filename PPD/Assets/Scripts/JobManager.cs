@@ -92,7 +92,7 @@ public class JobManager : MonoBehaviour
         JobHandle jobHandle = job.Schedule(sphereList.Length, 64);
         jobHandle.Complete();
         
-        _calculationText.text = sphereList[0].index.ToString();
+        _calculationText.text = sphereList[0].calc.ToString();
 
         for(int i = 0; i < sphereList.Length; i++)
         {
@@ -112,11 +112,11 @@ public class JobManager : MonoBehaviour
         public void Execute(int index)
         {
             Sphere sphere = spheres[index];
-            sphere.index = index;
+            sphere.calc = index;
             // sphere.index = 0;
             for (int i = 0; i < iterations; i++)
             {
-                sphere.index += (int)(Mathf.Sqrt(5000) * sphere.yPosition);
+                sphere.calc += (int)(Mathf.Sqrt(5000) * sphere.yPosition);
             }
 
             if(sphere.yPosition >= sphere.maxY)

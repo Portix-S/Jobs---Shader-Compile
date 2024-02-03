@@ -15,8 +15,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Sphere[] spheres;
     [SerializeField] private List<GameObject> spheresPos;
     [SerializeField] private List<Material> _materials = new();
-    public float minSpeed = 0.1f;
-    public float maxSpeed = 0.5f;
+    [SerializeField] private int[] cudaCalculations;
     private int calc;
     public int iterations = 1;
 
@@ -36,7 +35,6 @@ public class GameManager : MonoBehaviour
     private static readonly int Spheres = Shader.PropertyToID("spheres");
     private static readonly int Time1 = Shader.PropertyToID("time");
     [SerializeField] private GameObject spherePrefab;
-    public List<GameObject> teste;
     private static readonly int GridDimX = Shader.PropertyToID("gridDimx");
     private static readonly int GridDimY = Shader.PropertyToID("gridDimy");
     private static readonly int GridDimZ = Shader.PropertyToID("gridDimz");
@@ -85,6 +83,8 @@ public class GameManager : MonoBehaviour
             spheresPos.Add(sphere);
         }
         spheres = new Sphere[spheresPos.Count];
+        cudaCalculations = new int[spheresPos.Count];
+        
         
         // _maxY = transform.position.y + 2f;
         // _minY = transform.position.y - 2f;
@@ -176,7 +176,7 @@ public class GameManager : MonoBehaviour
         
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            _sceneText.text = "Cena 0 - Sequencial";
+            _sceneText.text = "Case 0 - Sequential";
             _currentScene = 0;
             Debug.Log(_sequentialManager.GetIteration());
             slider.value = _sequentialManager.GetIteration();
@@ -185,7 +185,7 @@ public class GameManager : MonoBehaviour
         }
         if(Input.GetKeyDown(KeyCode.Alpha2))
         {
-            _sceneText.text = "Cena 1 - Paralelo com OpenMP";
+            _sceneText.text = "Case 1 - Jobs";
             _currentScene = 1;
             if (_lastScene <= 1)
             {
@@ -201,7 +201,7 @@ public class GameManager : MonoBehaviour
         }
         if(Input.GetKeyDown(KeyCode.Alpha3))
         {
-            _sceneText.text = "Cena 2 - CUDA";
+            _sceneText.text = "Case 2 - Compute Shader";
             _currentScene = 2;
             slider.maxValue = 1000000;
             slider.value = cudaIterations;
@@ -220,7 +220,7 @@ public class GameManager : MonoBehaviour
         }
         else if(_currentScene == 1)
         {
-            // ROda OpenMp
+            // Roda OpenMp
             _jobManager.OpenMP();
         }
         else if(_currentScene == 2)
@@ -228,20 +228,20 @@ public class GameManager : MonoBehaviour
             // Roda CUDA
             CUDA();
         }
-        // SphereMoveJob job = new SphereMoveJob()
     }
 
 
     private void CUDA()
     {
-        computeShader.SetFloat(Time1, Time.deltaTime);
-        computeShader.Dispatch(0, gridDimX, gridDimY, gridDimZ);
+        computeShader.SetFloat(Time1, Time.deltaTime); // Envia dados de tempo para a GPU 
+        computeShader.Dispatch(0, gridDimX, gridDimY, gridDimZ); // Inicia o calculo pela GPU
         
-        spheresBuffer.GetData(spheres);
+        spheresBuffer.GetData(spheres); // Recebe os dados da GPU
         int index = 0;
-        _calculationText.text = spheres[0].calc.ToString();
         foreach (Sphere sphere in spheres)
         {
+            cudaCalculations[index] = sphere.calc;
+            _calculationText.text = spheres[index].calc.ToString();
             spheresPos[index].transform.position = new Vector3(spheresPos[index].transform.position.x, sphere.yPosition, spheresPos[index].transform.position.z);
             index++;
         }

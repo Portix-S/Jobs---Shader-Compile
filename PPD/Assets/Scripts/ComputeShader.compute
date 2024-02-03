@@ -54,7 +54,7 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GROUPID, uint3 gidth
     sphere.calc = index;
     for (int i = 0; i < iterations; i++)
     {
-        sphere.calc += (sqrt(5000)*sphere.yPosition);
+        sphere.calc += (sqrt(50000)*sphere.yPosition);
     }
 
     if(sphere.yPosition >= sphere.maxY)

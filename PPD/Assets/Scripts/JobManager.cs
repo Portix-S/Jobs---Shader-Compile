@@ -14,6 +14,7 @@ public class JobManager : MonoBehaviour
 {
     [SerializeField] private float[] indexes;
     [SerializeField] private NativeArray<Sphere> sphereList;
+    [SerializeField] private int _numberOfThreads = 16;
     
     [SerializeField] private List<GameObject> spheresPos;
     private float _maxY = 2f;
@@ -89,14 +90,14 @@ public class JobManager : MonoBehaviour
             iterations = iterations
         };
         
-        JobHandle jobHandle = job.Schedule(sphereList.Length, sphereList.Length/15);
+        JobHandle jobHandle = job.Schedule(sphereList.Length, sphereList.Length / (_numberOfThreads-1)); // -1 because main thread is also a thread
         jobHandle.Complete();
         
-        _calculationText.text = sphereList[0].calc.ToString();
 
         for(int i = 0; i < sphereList.Length; i++)
         {
-            indexes[i] = sphereList[i].index;
+            _calculationText.text = sphereList[i].calc.ToString();
+            indexes[i] = sphereList[i].calc;
             spheresPos[i].transform.position = new Vector3(spheresPos[i].transform.position.x, sphereList[i].yPosition, spheresPos[i].transform.position.z);
         }
         // Debug.Log(cubeList[0].index);

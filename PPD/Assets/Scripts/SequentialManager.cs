@@ -43,7 +43,6 @@ public class SequentialManager : MonoBehaviour
     // Update is called once per frame
     public void Sequential()
     {
-        _calculationText.text = spheres[0].calc.ToString();
         for(int i = 0; i < spheres.Length; i++)
         {
             spheres[i].calc = i;
@@ -52,6 +51,7 @@ public class SequentialManager : MonoBehaviour
             {
                 spheres[i].calc += (int)(Mathf.Sqrt(5000) * (spheres[i].yPosition));
             }
+            _calculationText.text = spheres[i].calc.ToString();
             if(spheres[i].yPosition >= spheres[i].maxY)
             {
                 spheres[i].speed = (((i)%64)+1)* -0.2f;

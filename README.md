@@ -4,7 +4,16 @@
 This project is based on moving spheres around the scene, calculating positions with three different methods. The first utilizes a sequential approach, only with the main thread making all the calculations for each sphere. For the second, the calculations were distributed across all CPU cores and threads, using Unity’s Job System. And for the last method, we explored the high amount of GPU cores to show its high computing power.  
 As calculating position is a fairly simple task, the performance boost is not initially seen. So, to find the limits of calculation for each approach, an iterator was used to replicate complex calculations, as shown in the bottom left corner, making this task N times, controlled by the slider on screen.
 
+With only a couple of hundreds of iterations, the sequential code already struggles, once that for each sphere there’s an iteration of calculations, becoming a lot of calculations really fast. When it comes to the Jobs system (noting that I’ve got 10 cores and 16 threads), the workload is distributed between the 15 threads (as the main thread controls them), making the number of calculations per thread lower, resulting in a higher number of possible iterations. At last, using Unity’s Compute Shader system, it was possible to make all of these sphere calculations using the GPU, being naturally parallel devices, seeing the number of cores and memory access method. 
+In terms of comparison, my CPU has only 10 cores, while my GPU has 2048 of them. With that in mind, the workload is divided into really small tasks for each GPU core, that can calculate everything really fast and drastically reduce computational time. Besides that, we had a different approach to the sphere movement on this last method, to better see how the threads, blocks and grids work on the GPU, making a visual difference between each of them, making the learning of those topics easier. 
+In this case, we’ve got a 4x4 grid, totalizing 16 blocks, and each of these with a 16x16 configuration, having 256 threads per block. The visual representation shows each block separated from each other for better understanding, in which each block also moves at a different speed, being able to see how the GPU is working.
 
+
+If anyone wants to learn more about this topic, this CUDA post from NVIDIA shows in detail these thread/block/grid arrangements and how to use GPU to make these calculations (even though Unity doesn’t use CUDA, the logic is the same). Link: https://developer.nvidia.com/blog/even-easier-introduction-cuda/
+
+
+
+It’s worth noting that the repository is still a work in progress, so any help would be appreciated!
 
 
 ### Português (Brasil)
